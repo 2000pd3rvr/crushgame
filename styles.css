@@ -240,13 +240,14 @@ body {
     height: 97.2px;
     border-radius: 12.96px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.2s ease;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 3.24em;
     padding: 0;
-}
     position: relative;
     transform-style: preserve-3d;
     transform: translateZ(0);
@@ -254,6 +255,7 @@ body {
                 0 2px 4px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.3),
                 inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    will-change: transform;
 }
 
 .cell:hover {
@@ -267,7 +269,7 @@ body {
 }
 
 .cell.selected {
-    transform: scale(1.3) translateZ(20px) rotateX(10deg) rotateY(10deg);
+    transform: scale(1.25) translateZ(20px) rotateX(8deg) rotateY(8deg);
     box-shadow: 0 0 0 6px rgba(255, 255, 255, 1), 
                 0 0 20px rgba(100, 150, 255, 0.8),
                 0 0 40px rgba(100, 150, 255, 0.6),
@@ -275,12 +277,14 @@ body {
                 inset 0 3px 0 rgba(255, 255, 255, 0.5),
                 inset 0 -4px 8px rgba(0, 0, 0, 0.4);
     z-index: 30;
-    animation: dragPulse 0.6s ease-in-out infinite;
+    animation: dragPulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     border: 3px solid rgba(100, 150, 255, 1);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .cell.drag-target {
-    transform: scale(1.25) translateZ(15px) rotateX(-5deg) rotateY(-5deg);
+    transform: scale(1.2) translateZ(15px) rotateX(-4deg) rotateY(-4deg);
     box-shadow: 0 0 0 6px rgba(0, 255, 100, 1),
                 0 0 25px rgba(0, 255, 100, 0.9),
                 0 0 50px rgba(0, 255, 100, 0.7),
@@ -288,21 +292,23 @@ body {
                 inset 0 2px 0 rgba(255, 255, 255, 0.4),
                 inset 0 -3px 6px rgba(0, 0, 0, 0.3);
     z-index: 25;
-    animation: targetPulse 0.5s ease-in-out infinite;
+    animation: targetPulse 0.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     border: 3px solid rgba(0, 255, 100, 1);
     background-blend-mode: overlay;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .cell.dragging {
-    opacity: 0.7;
-    transform: scale(1.2) translateZ(25px) rotateX(15deg) rotateY(15deg);
+    opacity: 0.85;
+    z-index: 35;
+    transition: opacity 0.2s ease, transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .cell {
     user-select: none;
     -webkit-user-select: none;
     cursor: grab;
-    transition: all 0.15s ease;
 }
 
 .cell:active {
@@ -311,7 +317,7 @@ body {
 
 @keyframes dragPulse {
     0%, 100% {
-        transform: scale(1.3) translateZ(20px) rotateX(10deg) rotateY(10deg);
+        transform: scale(1.25) translateZ(20px) rotateX(8deg) rotateY(8deg);
         box-shadow: 0 0 0 6px rgba(255, 255, 255, 1), 
                     0 0 20px rgba(100, 150, 255, 0.8),
                     0 0 40px rgba(100, 150, 255, 0.6),
@@ -320,19 +326,19 @@ body {
                     inset 0 -4px 8px rgba(0, 0, 0, 0.4);
     }
     50% {
-        transform: scale(1.35) translateZ(25px) rotateX(12deg) rotateY(12deg);
-        box-shadow: 0 0 0 8px rgba(255, 255, 255, 1), 
-                    0 0 30px rgba(100, 150, 255, 1),
-                    0 0 60px rgba(100, 150, 255, 0.8),
-                    0 14px 28px rgba(0, 0, 0, 0.5),
-                    inset 0 4px 0 rgba(255, 255, 255, 0.6),
-                    inset 0 -5px 10px rgba(0, 0, 0, 0.5);
+        transform: scale(1.28) translateZ(22px) rotateX(9deg) rotateY(9deg);
+        box-shadow: 0 0 0 7px rgba(255, 255, 255, 1), 
+                    0 0 25px rgba(100, 150, 255, 0.9),
+                    0 0 50px rgba(100, 150, 255, 0.7),
+                    0 13px 26px rgba(0, 0, 0, 0.5),
+                    inset 0 3.5px 0 rgba(255, 255, 255, 0.55),
+                    inset 0 -4.5px 9px rgba(0, 0, 0, 0.45);
     }
 }
 
 @keyframes targetPulse {
     0%, 100% {
-        transform: scale(1.25) translateZ(15px) rotateX(-5deg) rotateY(-5deg);
+        transform: scale(1.2) translateZ(15px) rotateX(-4deg) rotateY(-4deg);
         box-shadow: 0 0 0 6px rgba(0, 255, 100, 1),
                     0 0 25px rgba(0, 255, 100, 0.9),
                     0 0 50px rgba(0, 255, 100, 0.7),
@@ -341,13 +347,13 @@ body {
                     inset 0 -3px 6px rgba(0, 0, 0, 0.3);
     }
     50% {
-        transform: scale(1.3) translateZ(20px) rotateX(-7deg) rotateY(-7deg);
-        box-shadow: 0 0 0 8px rgba(0, 255, 100, 1),
-                    0 0 35px rgba(0, 255, 100, 1),
-                    0 0 70px rgba(0, 255, 100, 0.9),
-                    0 12px 24px rgba(0, 0, 0, 0.5),
-                    inset 0 3px 0 rgba(255, 255, 255, 0.5),
-                    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
+        transform: scale(1.23) translateZ(17px) rotateX(-5deg) rotateY(-5deg);
+        box-shadow: 0 0 0 7px rgba(0, 255, 100, 1),
+                    0 0 30px rgba(0, 255, 100, 0.95),
+                    0 0 60px rgba(0, 255, 100, 0.8),
+                    0 11px 22px rgba(0, 0, 0, 0.5),
+                    inset 0 2.5px 0 rgba(255, 255, 255, 0.45),
+                    inset 0 -3.5px 7px rgba(0, 0, 0, 0.35);
     }
 }
 

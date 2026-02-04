@@ -15,6 +15,11 @@ class Match3Game {
         this.isDragging = false;
         this.visualSwapActive = false;
         this.visualSwapTarget = null;
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.dragOffsetX = 0;
+        this.dragOffsetY = 0;
+        this.animationFrameId = null;
         
         // Load best stats from localStorage
         this.bestLevel = parseInt(localStorage.getItem('bestLevel') || '1');
@@ -143,11 +148,25 @@ class Match3Game {
         // Add board-level mousemove for better drag tracking
         boardElement.addEventListener('mousemove', (e) => {
             if (this.isDragging && this.dragStartCell) {
+                // Update mouse position for smooth tracking
+                this.mouseX = e.clientX;
+                this.mouseY = e.clientY;
+                
                 const cell = e.target.closest('.cell');
                 if (cell && cell.dataset.row && cell.dataset.col) {
                     const row = parseInt(cell.dataset.row);
                     const col = parseInt(cell.dataset.col);
                     this.handleDragOver(e, row, col);
+                } else {
+                    // Update drag offset even when not over a cell
+                    const startCell = document.querySelector(
+                        `[data-row="${this.dragStartCell.row}"][data-col="${this.dragStartCell.col}"]`
+                    );
+                    if (startCell) {
+                        const rect = startCell.getBoundingClientRect();
+                        this.dragOffsetX = e.clientX - (rect.left + rect.width / 2);
+                        this.dragOffsetY = e.clientY - (rect.top + rect.height / 2);
+                    }
                 }
             }
         });
@@ -171,12 +190,57 @@ class Match3Game {
         
         const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
         if (cell) {
+            const rect = cell.getBoundingClientRect();
+            const boardRect = document.getElementById('game-board').getBoundingClientRect();
+            
+            // Store initial mouse position relative to cell center
+            this.mouseX = e.clientX;
+            this.mouseY = e.clientY;
+            this.dragOffsetX = e.clientX - (rect.left + rect.width / 2);
+            this.dragOffsetY = e.clientY - (rect.top + rect.height / 2);
+            
             cell.classList.add('selected', 'dragging');
             cell.style.cursor = 'grabbing';
+            cell.style.transition = 'none'; // Disable transition during drag for smooth following
+            
+            // Start smooth position tracking
+            this.startDragTracking();
         }
         
         // Add dragging class to board for visual feedback
         document.getElementById('game-board').classList.add('is-dragging');
+    }
+    
+    startDragTracking() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+        
+        const updateDragPosition = () => {
+            if (!this.isDragging || !this.dragStartCell) return;
+            
+            const cell = document.querySelector(
+                `[data-row="${this.dragStartCell.row}"][data-col="${this.dragStartCell.col}"]`
+            );
+            
+            if (cell) {
+                const boardRect = document.getElementById('game-board').getBoundingClientRect();
+                const cellRect = cell.getBoundingClientRect();
+                const cellCenterX = cellRect.left + cellRect.width / 2;
+                const cellCenterY = cellRect.top + cellRect.height / 2;
+                
+                // Calculate smooth offset from mouse position
+                const offsetX = this.dragOffsetX * 0.3; // Smooth following factor
+                const offsetY = this.dragOffsetY * 0.3;
+                
+                // Apply smooth transform
+                cell.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(1.15) translateZ(20px) rotateX(8deg) rotateY(8deg)`;
+            }
+            
+            this.animationFrameId = requestAnimationFrame(updateDragPosition);
+        };
+        
+        this.animationFrameId = requestAnimationFrame(updateDragPosition);
     }
     
     handleDragOver(e, row, col) {
@@ -251,6 +315,15 @@ class Match3Game {
         
         if (!cell1 || !cell2) return;
         
+        // Get cell positions for smooth swap animation
+        const rect1 = cell1.getBoundingClientRect();
+        const rect2 = cell2.getBoundingClientRect();
+        const boardRect = document.getElementById('game-board').getBoundingClientRect();
+        
+        // Calculate relative positions
+        const deltaX = (rect2.left - rect1.left) / cell1.offsetWidth;
+        const deltaY = (rect2.top - rect1.top) / cell1.offsetHeight;
+        
         // Actually swap in the board array so match checking works correctly
         [this.board[row1][col1], this.board[row2][col2]] = 
         [this.board[row2][col2], this.board[row1][col1]];
@@ -259,26 +332,32 @@ class Match3Game {
         const gem1 = this.board[row1][col1];
         const gem2 = this.board[row2][col2];
         
-        // Update the visual appearance to match the swapped board
-        cell1.className = `cell gem-${gem1}`;
-        cell1.textContent = this.getGemEmoji(gem1);
-        cell1.classList.add('selected', 'dragging');
+        // Enable smooth transitions for swap animation
+        cell1.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        cell2.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
         
-        cell2.className = `cell gem-${gem2}`;
-        cell2.textContent = this.getGemEmoji(gem2);
-        cell2.classList.add('drag-target');
+        // Animate swap with smooth position interpolation
+        cell1.style.transform = `translate(${deltaX * 100}%, ${deltaY * 100}%) scale(1.1) translateZ(15px)`;
+        cell2.style.transform = `translate(${-deltaX * 100}%, ${-deltaY * 100}%) scale(1.1) translateZ(15px)`;
+        
+        // Update the visual appearance after a brief delay for smooth transition
+        setTimeout(() => {
+            cell1.className = `cell gem-${gem1}`;
+            cell1.textContent = this.getGemEmoji(gem1);
+            cell1.classList.add('selected', 'dragging');
+            cell1.style.transform = ''; // Reset transform, let CSS handle it
+            
+            cell2.className = `cell gem-${gem2}`;
+            cell2.textContent = this.getGemEmoji(gem2);
+            cell2.classList.add('drag-target');
+            cell2.style.transform = ''; // Reset transform, let CSS handle it
+        }, 50);
         
         this.visualSwapActive = true;
     }
     
     revertVisualSwap() {
         if (!this.visualSwapActive || !this.dragStartCell || !this.visualSwapTarget) return;
-        
-        // Revert the board array swap
-        [this.board[this.dragStartCell.row][this.dragStartCell.col], 
-         this.board[this.visualSwapTarget.row][this.visualSwapTarget.col]] = 
-        [this.board[this.visualSwapTarget.row][this.visualSwapTarget.col], 
-         this.board[this.dragStartCell.row][this.dragStartCell.col]];
         
         const cell1 = document.querySelector(
             `[data-row="${this.dragStartCell.row}"][data-col="${this.dragStartCell.col}"]`
@@ -288,16 +367,34 @@ class Match3Game {
         );
         
         if (cell1 && cell2) {
-            // Restore original appearance
-            const gem1 = this.board[this.dragStartCell.row][this.dragStartCell.col];
-            const gem2 = this.board[this.visualSwapTarget.row][this.visualSwapTarget.col];
+            // Smooth revert animation
+            cell1.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            cell2.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
             
-            cell1.className = `cell gem-${gem1}`;
-            cell1.textContent = this.getGemEmoji(gem1);
-            cell1.classList.add('selected', 'dragging');
+            // Animate back to original positions
+            cell1.style.transform = 'translate(0, 0) scale(1.1) translateZ(15px)';
+            cell2.style.transform = 'translate(0, 0) scale(1.1) translateZ(15px)';
             
-            cell2.className = `cell gem-${gem2}`;
-            cell2.textContent = this.getGemEmoji(gem2);
+            // Revert the board array swap after animation
+            setTimeout(() => {
+                [this.board[this.dragStartCell.row][this.dragStartCell.col], 
+                 this.board[this.visualSwapTarget.row][this.visualSwapTarget.col]] = 
+                [this.board[this.visualSwapTarget.row][this.visualSwapTarget.col], 
+                 this.board[this.dragStartCell.row][this.dragStartCell.col]];
+                
+                // Restore original appearance
+                const gem1 = this.board[this.dragStartCell.row][this.dragStartCell.col];
+                const gem2 = this.board[this.visualSwapTarget.row][this.visualSwapTarget.col];
+                
+                cell1.className = `cell gem-${gem1}`;
+                cell1.textContent = this.getGemEmoji(gem1);
+                cell1.classList.add('selected', 'dragging');
+                cell1.style.transform = '';
+                
+                cell2.className = `cell gem-${gem2}`;
+                cell2.textContent = this.getGemEmoji(gem2);
+                cell2.style.transform = '';
+            }, 300);
         }
         
         this.visualSwapActive = false;
@@ -425,10 +522,23 @@ class Match3Game {
         this.dragStartCell = null;
         this.isDragging = false;
         
-        // Remove all drag-related classes
+        // Cancel animation frame
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        
+        // Smoothly reset all drag-related styles
         document.querySelectorAll('.cell').forEach(c => {
+            c.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            c.style.transform = '';
             c.classList.remove('selected', 'drag-target', 'dragging');
             c.style.cursor = '';
+            
+            // Remove inline styles after transition
+            setTimeout(() => {
+                c.style.transition = '';
+            }, 300);
         });
         
         // Remove board dragging class
