@@ -44,7 +44,17 @@
     <div class="game-header hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7.5px;">
                 <h1 style="margin: 0;">Reality Swipe</h1>
-                <button id="music-toggle-btn" class="music-toggle-btn" title="Toggle Music">🔊</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                        <label style="font-size: 0.6em; color: #666;">Music</label>
+                        <input type="range" id="music-volume" min="0" max="100" value="50" style="width: 60px; height: 4px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                        <label style="font-size: 0.6em; color: #666;">SFX</label>
+                        <input type="range" id="sfx-volume" min="0" max="100" value="70" style="width: 60px; height: 4px;">
+                    </div>
+                    <button id="music-toggle-btn" class="music-toggle-btn" title="Toggle Music">🔊</button>
+                </div>
             </div>
             <div class="score-panel">
                 <div class="score-item">

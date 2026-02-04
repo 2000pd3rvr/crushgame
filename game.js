@@ -155,29 +155,53 @@ class Match3Game {
     }
     
     renderBoard() {
+        // Don't render during active drag to prevent instability
+        if (this.isDragging) {
+            return;
+        }
+        
         const boardElement = document.getElementById('game-board');
-        boardElement.innerHTML = '';
+        
+        // Check if board already exists - update instead of recreate
+        const existingCells = boardElement.querySelectorAll('.cell');
+        const needsFullRender = existingCells.length !== this.boardRows * this.boardCols;
+        
+        if (needsFullRender) {
+            boardElement.innerHTML = '';
+        }
         
         for (let row = 0; row < this.boardRows; row++) {
             for (let col = 0; col < this.boardCols; col++) {
-                const cell = document.createElement('div');
-                cell.className = `cell gem-${this.board[row][col]}`;
-                cell.dataset.row = row;
-                cell.dataset.col = col;
-                cell.textContent = this.getGemEmoji(this.board[row][col]);
+                let cell = existingCells[row * this.boardCols + col];
                 
-                // Click handler (fallback)
-                cell.addEventListener('click', () => this.handleCellClick(row, col));
+                if (!cell || needsFullRender) {
+                    cell = document.createElement('div');
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    // Click handler (fallback)
+                    cell.addEventListener('click', () => this.handleCellClick(row, col));
+                    
+                    // Drag handlers
+                    cell.addEventListener('mousedown', (e) => this.handleDragStart(e, row, col));
+                    cell.addEventListener('mouseenter', (e) => this.handleDragOver(e, row, col));
+                    
+                    // Prevent text selection during drag
+                    cell.addEventListener('selectstart', (e) => e.preventDefault());
+                    cell.addEventListener('dragstart', (e) => e.preventDefault());
+                    
+                    boardElement.appendChild(cell);
+                }
                 
-                // Drag handlers
-                cell.addEventListener('mousedown', (e) => this.handleDragStart(e, row, col));
-                cell.addEventListener('mouseenter', (e) => this.handleDragOver(e, row, col));
+                // Update cell content and class
+                const gemType = this.board[row][col];
+                cell.className = `cell gem-${gemType}`;
+                cell.textContent = this.getGemEmoji(gemType);
                 
-                // Prevent text selection during drag
-                cell.addEventListener('selectstart', (e) => e.preventDefault());
-                cell.addEventListener('dragstart', (e) => e.preventDefault()); // Prevent default drag
-                
-                boardElement.appendChild(cell);
+                // Reset any transform/transition states
+                cell.style.transform = '';
+                cell.style.transition = '';
+                cell.classList.remove('selected', 'drag-target', 'dragging', 'matched', 'match-enlarge');
             }
         }
         
@@ -653,18 +677,21 @@ class Match3Game {
             this.animateMatchedCells(matches).then(() => {
                 this.processMatches();
             });
-        } else {
-            // Invalid swap - revert both visual and logical
-            if (this.visualSwapActive) {
-                // Visual swap will be reverted by renderBoard, but we need to revert the array
-                [this.board[row1][col1], this.board[row2][col2]] = 
-                [this.board[row2][col2], this.board[row1][col1]];
             } else {
-                // Revert the swap we just made
-                [this.board[row1][col1], this.board[row2][col2]] = 
-                [this.board[row2][col2], this.board[row1][col1]];
-            }
-            this.renderBoard();
+                // Invalid swap - revert both visual and logical
+                if (this.visualSwapActive) {
+                    // Visual swap will be reverted by revertVisualSwap, but we need to revert the array
+                    [this.board[row1][col1], this.board[row2][col2]] = 
+                    [this.board[row2][col2], this.board[row1][col1]];
+                } else {
+                    // Revert the swap we just made
+                    [this.board[row1][col1], this.board[row2][col2]] = 
+                    [this.board[row2][col2], this.board[row1][col1]];
+                }
+                // Don't call renderBoard here - let revertVisualSwap handle visual update
+                if (!this.visualSwapActive) {
+                    this.renderBoard();
+                }
         }
     }
     
@@ -1219,10 +1246,35 @@ class SoundManager {
         this.audioContext = null;
         this.musicEnabled = localStorage.getItem('musicEnabled') !== 'false';
         this.soundsEnabled = localStorage.getItem('soundsEnabled') !== 'false';
+        this.musicVolume = parseFloat(localStorage.getItem('musicVolume') || '0.5');
+        this.sfxVolume = parseFloat(localStorage.getItem('sfxVolume') || '0.7');
         this.musicOscillator = null;
         this.musicGainNode = null;
         this.isMusicPlaying = false;
         this.initAudioContext();
+        this.setupVolumeControls();
+    }
+    
+    setupVolumeControls() {
+        // Setup music volume control
+        const musicVolumeSlider = document.getElementById('music-volume');
+        if (musicVolumeSlider) {
+            musicVolumeSlider.value = this.musicVolume * 100;
+            musicVolumeSlider.addEventListener('input', (e) => {
+                this.musicVolume = e.target.value / 100;
+                localStorage.setItem('musicVolume', this.musicVolume);
+            });
+        }
+        
+        // Setup SFX volume control
+        const sfxVolumeSlider = document.getElementById('sfx-volume');
+        if (sfxVolumeSlider) {
+            sfxVolumeSlider.value = this.sfxVolume * 100;
+            sfxVolumeSlider.addEventListener('input', (e) => {
+                this.sfxVolume = e.target.value / 100;
+                localStorage.setItem('sfxVolume', this.sfxVolume);
+            });
+        }
     }
     
     initAudioContext() {
@@ -1264,9 +1316,10 @@ class SoundManager {
             oscillator.type = 'sine';
             oscillator.frequency.value = frequency;
             
-            gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.05, this.audioContext.currentTime + 0.3);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.6);
+            const baseGain = this.musicVolume * 0.1;
+            gainNode.gain.setValueAtTime(baseGain, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(baseGain * 0.5, this.audioContext.currentTime + 0.3);
+            gainNode.gain.exponentialRampToValueAtTime(baseGain * 0.1, this.audioContext.currentTime + 0.6);
             
             oscillator.start(this.audioContext.currentTime);
             oscillator.stop(this.audioContext.currentTime + 0.6);
@@ -1325,8 +1378,9 @@ class SoundManager {
         oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.1);
         
-        gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+        const volume = this.sfxVolume * 0.2;
+        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(volume * 0.05, this.audioContext.currentTime + 0.1);
         
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + 0.1);
@@ -1350,8 +1404,9 @@ class SoundManager {
                 oscillator.type = 'sine';
                 oscillator.frequency.value = freq * (1 + count * 0.1);
                 
-                gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                const volume = this.sfxVolume * 0.15;
+                gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(volume * 0.07, this.audioContext.currentTime + 0.3);
                 
                 oscillator.start(this.audioContext.currentTime);
                 oscillator.stop(this.audioContext.currentTime + 0.3);
@@ -1375,8 +1430,9 @@ class SoundManager {
                 oscillator.type = 'sine';
                 oscillator.frequency.value = freq;
                 
-                gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.4);
+                const volume = this.sfxVolume * 0.2;
+                gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(volume * 0.05, this.audioContext.currentTime + 0.4);
                 
                 oscillator.start(this.audioContext.currentTime);
                 oscillator.stop(this.audioContext.currentTime + 0.4);
@@ -1400,8 +1456,9 @@ class SoundManager {
                 oscillator.type = 'sine';
                 oscillator.frequency.value = freq;
                 
-                gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+                const volume = this.sfxVolume * 0.15;
+                gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(volume * 0.07, this.audioContext.currentTime + 0.5);
                 
                 oscillator.start(this.audioContext.currentTime);
                 oscillator.stop(this.audioContext.currentTime + 0.5);
@@ -1422,8 +1479,9 @@ class SoundManager {
         oscillator.type = 'sine';
         oscillator.frequency.value = 800;
         
-        gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.05);
+        const volume = this.sfxVolume * 0.1;
+        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(volume * 0.1, this.audioContext.currentTime + 0.05);
         
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + 0.05);

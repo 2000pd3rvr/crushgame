@@ -212,6 +212,52 @@ body {
     transform: scale(0.95);
 }
 
+/* Volume slider styles */
+#music-volume,
+#sfx-volume {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(102, 126, 234, 0.2);
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+}
+
+#music-volume::-webkit-slider-thumb,
+#sfx-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #667eea;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#music-volume::-webkit-slider-thumb:hover,
+#sfx-volume::-webkit-slider-thumb:hover {
+    background: #764ba2;
+    transform: scale(1.2);
+}
+
+#music-volume::-moz-range-thumb,
+#sfx-volume::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: #667eea;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+#music-volume::-moz-range-thumb:hover,
+#sfx-volume::-moz-range-thumb:hover {
+    background: #764ba2;
+    transform: scale(1.2);
+}
+
 .score-panel {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
