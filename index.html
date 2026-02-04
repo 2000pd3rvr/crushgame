@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reality Swipe</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Home Page -->
+    <div id="home-page" class="home-page">
+        <div class="home-content">
+            <h1 class="home-title">Reality Swipe</h1>
+            <p class="home-subtitle">Match gems and create cascades!</p>
+            
+            <div class="home-stats" id="home-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Best Level</span>
+                    <span class="stat-value" id="best-level">1</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Best Score</span>
+                    <span class="stat-value" id="best-score">0</span>
+                </div>
+            </div>
+            
+            <div class="home-buttons">
+                <button id="start-game-btn" class="btn btn-primary btn-large">Start Game</button>
+            </div>
+            
+            <div class="home-instructions">
+                <h3>How to Play</h3>
+                <ul>
+                    <li>Drag or click adjacent gems to swap them</li>
+                    <li>Match 3 or more gems in a row or column</li>
+                    <li>Reach the target score to complete each level</li>
+                    <li>Levels are infinite - see how far you can go!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Screen -->
+    <div class="game-header hidden">
+            <h1>Reality Swipe</h1>
+            <div class="score-panel">
+                <div class="score-item">
+                    <span class="label">Score:</span>
+                    <span id="score" class="value">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">Target:</span>
+                    <span id="target-score" class="value">1000</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">Moves:</span>
+                    <span id="moves" class="value">30</span>
+                    <span class="moves-info">/ <span id="level-moves">30</span></span>
+                </div>
+                <div class="score-item">
+                    <span class="label">Level:</span>
+                    <span id="level" class="value">1</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="game-board" class="game-board"></div>
+        
+        <div class="game-controls">
+            <button id="home-btn" class="btn btn-secondary">Home</button>
+            <button id="reset-btn" class="btn btn-primary">New Game</button>
+            <button id="hint-btn" class="btn btn-secondary">Hint</button>
+        </div>
+        
+        <div id="game-over" class="game-over hidden">
+            <div class="game-over-content">
+                <h2>Game Over!</h2>
+                <p>Level Reached: <span id="final-level">1</span></p>
+                <p>Final Score: <span id="final-score">0</span></p>
+                <div class="game-over-buttons">
+                    <button id="retry-btn" class="btn btn-primary">Retry Level</button>
+                    <button id="quit-game-btn" class="btn btn-secondary">Quit</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="level-complete" class="level-complete hidden">
+            <div class="level-complete-content">
+                <h2>🎉 Level Complete!</h2>
+                <p>Level <span id="completed-level">1</span> Completed!</p>
+                <p>Score: <span id="level-score">0</span></p>
+                <p>Total Score: <span id="total-score">0</span></p>
+                <div class="level-complete-buttons">
+                    <button id="continue-btn" class="btn btn-primary">Continue to Next Level</button>
+                    <button id="quit-btn" class="btn btn-secondary">Quit</button>
+                </div>
+            </div>
+        </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
+
