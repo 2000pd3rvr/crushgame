@@ -17,6 +17,14 @@ body {
 
 .hidden {
     display: none !important;
+    visibility: hidden !important;
+}
+
+/* Ensure game-controls stays visible when not hidden */
+.game-controls:not(.hidden) {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Home Page Styles */
@@ -638,11 +646,14 @@ body {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin: auto;
-    margin-top: auto;
-    margin-bottom: 20px;
+    margin: 20px auto;
     width: calc(8 * 97.2px + 7 * 2px + 4px); /* Match grid width: 8 cells + 7 gaps + padding */
     max-width: 100%;
+    position: relative;
+    z-index: 100;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .game-controls .btn {
@@ -660,6 +671,10 @@ body {
     pointer-events: auto;
     position: relative;
     outline: none;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-flex !important;
+    z-index: 101;
 }
 
 .game-controls .btn:hover {

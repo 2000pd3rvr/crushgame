@@ -40,17 +40,33 @@ class Match3Game {
     
     showHome() {
         document.getElementById('home-page').classList.remove('hidden');
-        document.querySelector('.game-header').classList.add('hidden');
-        document.getElementById('game-board').classList.add('hidden');
-        document.querySelector('.game-controls').classList.add('hidden');
+        const gameHeader = document.querySelector('.game-header');
+        const gameBoard = document.getElementById('game-board');
+        const gameControls = document.querySelector('.game-controls');
+        
+        if (gameHeader) gameHeader.classList.add('hidden');
+        if (gameBoard) gameBoard.classList.add('hidden');
+        if (gameControls) {
+            gameControls.classList.add('hidden');
+            gameControls.style.visibility = 'hidden';
+        }
         this.updateHomeStats();
     }
     
     showGame() {
         document.getElementById('home-page').classList.add('hidden');
-        document.querySelector('.game-header').classList.remove('hidden');
-        document.getElementById('game-board').classList.remove('hidden');
-        document.querySelector('.game-controls').classList.remove('hidden');
+        const gameHeader = document.querySelector('.game-header');
+        const gameBoard = document.getElementById('game-board');
+        const gameControls = document.querySelector('.game-controls');
+        
+        if (gameHeader) gameHeader.classList.remove('hidden');
+        if (gameBoard) gameBoard.classList.remove('hidden');
+        if (gameControls) {
+            gameControls.classList.remove('hidden');
+            gameControls.style.visibility = 'visible';
+            gameControls.style.display = 'flex';
+            gameControls.style.opacity = '1';
+        }
         this.createBoard();
         this.renderBoard();
         this.updateUI();
