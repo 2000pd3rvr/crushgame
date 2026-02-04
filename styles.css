@@ -764,28 +764,23 @@ body.dark-theme .level-complete-content {
 }
 .gem-1 { 
     background: white;
-    animation: gemFloat 4s ease-in-out infinite;
-    animation-delay: 0.3s;
+    animation: none;
 }
 .gem-2 { 
     background: white;
-    animation: gemFloat 4s ease-in-out infinite;
-    animation-delay: 0.6s;
+    animation: none;
 }
 .gem-3 { 
     background: white;
-    animation: gemFloat 4s ease-in-out infinite;
-    animation-delay: 0.9s;
+    animation: none;
 }
 .gem-4 { 
     background: white;
-    animation: gemFloat 4s ease-in-out infinite;
-    animation-delay: 1.2s;
+    animation: none;
 }
 .gem-5 { 
     background: white;
-    animation: gemFloat 4s ease-in-out infinite;
-    animation-delay: 1.5s;
+    animation: none;
 }
 
 /* Slow floating animation for gems with 3D rotation */
@@ -836,9 +831,9 @@ body.dark-theme .level-complete-content {
     animation: none !important;
 }
 
-/* Match enlarge animation - pauses gemFloat and shows enlargement */
+/* Match enlarge animation - paused */
 .cell.match-enlarge {
-    animation: enlargeMatch 0.4s ease-out !important;
+    animation: none !important;
 }
 
 .cell.match-enlarge.gem-0,
@@ -847,7 +842,7 @@ body.dark-theme .level-complete-content {
 .cell.match-enlarge.gem-3,
 .cell.match-enlarge.gem-4,
 .cell.match-enlarge.gem-5 {
-    animation: enlargeMatch 0.15s ease-out !important;
+    animation: none !important;
 }
 
 .game-controls {
