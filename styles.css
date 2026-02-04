@@ -180,8 +180,36 @@ body {
 .game-header h1 {
     color: #333;
     font-size: 1.25em;
-    margin-bottom: 7.5px;
+    margin: 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.music-toggle-btn {
+    background: rgba(102, 126, 234, 0.1);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+    outline: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.music-toggle-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: scale(1.1);
+}
+
+.music-toggle-btn:active {
+    transform: scale(0.95);
 }
 
 .score-panel {
@@ -945,4 +973,3 @@ body {
     }
 }
 
-/* Force refresh */

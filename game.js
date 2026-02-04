@@ -30,6 +30,9 @@ class Match3Game {
         this.bestLevel = parseInt(localStorage.getItem('bestLevel') || '1');
         this.bestScore = parseInt(localStorage.getItem('bestScore') || '0');
         
+        // Initialize sound system
+        this.soundManager = new SoundManager();
+        
         this.init();
     }
     
@@ -50,6 +53,12 @@ class Match3Game {
             gameControls.classList.add('hidden');
             gameControls.style.visibility = 'hidden';
         }
+        
+        // Stop background music when going home
+        if (this.soundManager) {
+            this.soundManager.stopBackgroundMusic();
+        }
+        
         this.updateHomeStats();
     }
     
@@ -70,6 +79,12 @@ class Match3Game {
         this.createBoard();
         this.renderBoard();
         this.updateUI();
+        
+        // Start background music
+        if (this.soundManager) {
+            this.soundManager.startBackgroundMusic();
+            this.soundManager.updateMusicButton();
+        }
     }
     
     updateHomeStats() {
@@ -210,6 +225,11 @@ class Match3Game {
         e.preventDefault();
         this.dragStartCell = { row, col };
         this.isDragging = true;
+        
+        // Play swipe sound
+        if (this.soundManager) {
+            this.soundManager.playSwipeSound();
+        }
         
         const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
         if (cell) {
@@ -624,6 +644,11 @@ class Match3Game {
             this.updateCellSelection();
             if (this.moves > 0) this.moves--;
             
+            // Play match sound
+            if (this.soundManager) {
+                this.soundManager.playMatchSound(matches.length);
+            }
+            
             // Animate matched cells by enlarging them
             this.animateMatchedCells(matches).then(() => {
                 this.processMatches();
@@ -847,6 +872,11 @@ class Match3Game {
         // Save best stats
         this.saveBestStats();
         
+        // Play game over sound
+        if (this.soundManager) {
+            this.soundManager.playGameOverSound();
+        }
+        
         // Show game over modal
         document.getElementById('final-level').textContent = this.level;
         document.getElementById('final-score').textContent = this.totalScore.toLocaleString();
@@ -879,6 +909,11 @@ class Match3Game {
         
         // Update total score
         this.totalScore += this.score;
+        
+        // Play level complete sound
+        if (this.soundManager) {
+            this.soundManager.playLevelCompleteSound();
+        }
         
         // Show level complete modal
         document.getElementById('completed-level').textContent = this.level;
@@ -963,6 +998,11 @@ class Match3Game {
                 this.buttonClickCooldown = true;
                 const button = e.currentTarget;
                 
+                // Play click sound
+                if (this.soundManager) {
+                    this.soundManager.playClickSound();
+                }
+                
                 // Add visual feedback
                 button.style.transform = 'scale(0.95)';
                 setTimeout(() => {
@@ -1010,6 +1050,19 @@ class Match3Game {
         document.getElementById('quit-btn').addEventListener('click', preventRapidClicks(() => {
             this.goToHome();
         }));
+        
+        // Music toggle button
+        const musicToggleBtn = document.getElementById('music-toggle-btn');
+        if (musicToggleBtn) {
+            musicToggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (this.soundManager) {
+                    this.soundManager.toggleMusic();
+                    this.soundManager.playClickSound();
+                }
+            });
+        }
     }
     
     startNewGame() {
@@ -1157,6 +1210,223 @@ class Match3Game {
     
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+// Sound Manager Class
+class SoundManager {
+    constructor() {
+        this.audioContext = null;
+        this.musicEnabled = localStorage.getItem('musicEnabled') !== 'false';
+        this.soundsEnabled = localStorage.getItem('soundsEnabled') !== 'false';
+        this.musicOscillator = null;
+        this.musicGainNode = null;
+        this.isMusicPlaying = false;
+        this.initAudioContext();
+    }
+    
+    initAudioContext() {
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.warn('Web Audio API not supported');
+        }
+    }
+    
+    // Start background music (looping, fun upbeat melody)
+    startBackgroundMusic() {
+        if (!this.audioContext || !this.musicEnabled || this.isMusicPlaying) return;
+        
+        try {
+            this.isMusicPlaying = true;
+            this.playMusicLoop();
+        } catch (e) {
+            console.warn('Could not start music:', e);
+        }
+    }
+    
+    playMusicLoop() {
+        if (!this.audioContext || !this.musicEnabled) return;
+        
+        const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]; // C major scale
+        let noteIndex = 0;
+        
+        const playNote = () => {
+            if (!this.musicEnabled || !this.isMusicPlaying) return;
+            
+            const frequency = notes[noteIndex % notes.length];
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequency;
+            
+            gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.05, this.audioContext.currentTime + 0.3);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.6);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + 0.6);
+            
+            noteIndex++;
+            
+            setTimeout(() => {
+                if (this.musicEnabled && this.isMusicPlaying) {
+                    playNote();
+                }
+            }, 300);
+        };
+        
+        playNote();
+    }
+    
+    stopBackgroundMusic() {
+        this.isMusicPlaying = false;
+        if (this.musicOscillator) {
+            this.musicOscillator.stop();
+            this.musicOscillator = null;
+        }
+    }
+    
+    toggleMusic() {
+        this.musicEnabled = !this.musicEnabled;
+        localStorage.setItem('musicEnabled', this.musicEnabled);
+        
+        if (this.musicEnabled) {
+            this.startBackgroundMusic();
+        } else {
+            this.stopBackgroundMusic();
+        }
+        
+        this.updateMusicButton();
+    }
+    
+    updateMusicButton() {
+        const btn = document.getElementById('music-toggle-btn');
+        if (btn) {
+            btn.textContent = this.musicEnabled ? '🔊' : '🔇';
+        }
+    }
+    
+    // Play swipe sound (whoosh)
+    playSwipeSound() {
+        if (!this.audioContext || !this.soundsEnabled) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.1);
+    }
+    
+    // Play match sound (successful match - cheerful chime)
+    playMatchSound(count = 1) {
+        if (!this.audioContext || !this.soundsEnabled) return;
+        
+        const frequencies = [523.25, 659.25, 783.99]; // C, E, G chord
+        const delay = 0.05;
+        
+        frequencies.forEach((freq, index) => {
+            setTimeout(() => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = freq * (1 + count * 0.1);
+                
+                gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.3);
+            }, index * delay);
+        });
+    }
+    
+    // Play level complete sound (victory fanfare)
+    playLevelCompleteSound() {
+        if (!this.audioContext || !this.soundsEnabled) return;
+        
+        const melody = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+        melody.forEach((freq, index) => {
+            setTimeout(() => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = freq;
+                
+                gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.4);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.4);
+            }, index * 150);
+        });
+    }
+    
+    // Play game over sound (sad tone)
+    playGameOverSound() {
+        if (!this.audioContext || !this.soundsEnabled) return;
+        
+        const frequencies = [392.00, 349.23, 293.66, 261.63];
+        frequencies.forEach((freq, index) => {
+            setTimeout(() => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = freq;
+                
+                gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.5);
+            }, index * 200);
+        });
+    }
+    
+    // Play button click sound
+    playClickSound() {
+        if (!this.audioContext || !this.soundsEnabled) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 800;
+        
+        gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.05);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.05);
     }
 }
 
