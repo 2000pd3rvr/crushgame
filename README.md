@@ -10,7 +10,6 @@ pinned: false
 license: mit
 ---
 
-
 # 🎮 Reality Swipe
 
 **Match gems, create cascades, and crush levels!** A delightful match-3 puzzle game built with pure JavaScript. No frameworks, no fuss—just pure gaming fun! 🎯
