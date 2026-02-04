@@ -7,6 +7,7 @@ sdk: static
 sdk_version: latest
 app_file: index.html
 pinned: false
+license: mit
 ---
 
 # 🎮 Reality Swipe
