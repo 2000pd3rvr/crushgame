@@ -324,6 +324,7 @@ class Match3Game {
     }
     
     getGemEmoji(gemType) {
+        if (gemType === -1) return ''; // Empty cell
         const emojis = ['🔴', '🔵', '🟡', '🟢', '🟠', '🟣'];
         return emojis[gemType] || '⚪';
     }
