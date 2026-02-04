@@ -794,28 +794,9 @@ class Match3Game {
     }
     
     async animateMatchedCells(matches) {
-        // Add enlarge class to all matched cells
-        matches.forEach(match => {
-            const cell = document.querySelector(
-                `[data-row="${match.row}"][data-col="${match.col}"]`
-            );
-            if (cell) {
-                cell.classList.add('match-enlarge');
-            }
-        });
-        
-        // Wait for the enlargement animation to complete (much faster)
-        await this.sleep(150);
-        
-        // Remove the enlarge class
-        matches.forEach(match => {
-            const cell = document.querySelector(
-                `[data-row="${match.row}"][data-col="${match.col}"]`
-            );
-            if (cell) {
-                cell.classList.remove('match-enlarge');
-            }
-        });
+        // No animation - skip immediately
+        // This function is kept for compatibility but does nothing now
+        await this.sleep(0);
     }
     
     updateCellsAfterMatch() {
