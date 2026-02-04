@@ -24,6 +24,7 @@ class Match3Game {
         this.currentOffsetX = 0;
         this.currentOffsetY = 0;
         this.animationFrameId = null;
+        this.buttonClickCooldown = false;
         
         // Load best stats from localStorage
         this.bestLevel = parseInt(localStorage.getItem('bestLevel') || '1');
@@ -934,37 +935,65 @@ class Match3Game {
     }
     
     setupEventListeners() {
-        document.getElementById('start-game-btn').addEventListener('click', () => {
+        // Helper function to prevent rapid clicks
+        const preventRapidClicks = (callback) => {
+            return (e) => {
+                if (this.buttonClickCooldown) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                
+                this.buttonClickCooldown = true;
+                const button = e.currentTarget;
+                
+                // Add visual feedback
+                button.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    button.style.transform = '';
+                }, 150);
+                
+                // Execute callback
+                callback();
+                
+                // Reset cooldown after a short delay
+                setTimeout(() => {
+                    this.buttonClickCooldown = false;
+                }, 300);
+            };
+        };
+        
+        document.getElementById('start-game-btn').addEventListener('click', preventRapidClicks(() => {
             this.startNewGame();
-        });
+        }));
         
-        document.getElementById('home-btn').addEventListener('click', () => {
+        document.getElementById('home-btn').addEventListener('click', preventRapidClicks(() => {
             this.goToHome();
-        });
+        }));
         
-        document.getElementById('reset-btn').addEventListener('click', () => {
+        document.getElementById('reset-btn').addEventListener('click', preventRapidClicks(() => {
             this.resetGame();
-        });
+        }));
         
-        document.getElementById('retry-btn').addEventListener('click', () => {
+        document.getElementById('retry-btn').addEventListener('click', preventRapidClicks(() => {
             this.retryLevel();
-        });
+        }));
         
-        document.getElementById('quit-game-btn').addEventListener('click', () => {
+        document.getElementById('quit-game-btn').addEventListener('click', preventRapidClicks(() => {
             this.goToHome();
-        });
+        }));
         
-        document.getElementById('hint-btn').addEventListener('click', () => {
+        document.getElementById('hint-btn').addEventListener('click', preventRapidClicks(() => {
             this.showHint();
-        });
+        }));
         
-        document.getElementById('continue-btn').addEventListener('click', () => {
+        document.getElementById('continue-btn').addEventListener('click', preventRapidClicks(() => {
             this.continueToNextLevel();
-        });
+        }));
         
-        document.getElementById('quit-btn').addEventListener('click', () => {
+        document.getElementById('quit-btn').addEventListener('click', preventRapidClicks(() => {
             this.goToHome();
-        });
+        }));
     }
     
     startNewGame() {
