@@ -19,6 +19,10 @@ class Match3Game {
         this.mouseY = 0;
         this.dragOffsetX = 0;
         this.dragOffsetY = 0;
+        this.targetOffsetX = 0;
+        this.targetOffsetY = 0;
+        this.currentOffsetX = 0;
+        this.currentOffsetY = 0;
         this.animationFrameId = null;
         
         // Load best stats from localStorage
@@ -152,21 +156,23 @@ class Match3Game {
                 this.mouseX = e.clientX;
                 this.mouseY = e.clientY;
                 
+                const startCell = document.querySelector(
+                    `[data-row="${this.dragStartCell.row}"][data-col="${this.dragStartCell.col}"]`
+                );
+                if (startCell) {
+                    const rect = startCell.getBoundingClientRect();
+                    // Calculate target offset (where we want to go)
+                    this.targetOffsetX = (e.clientX - (rect.left + rect.width / 2)) * 0.6;
+                    this.targetOffsetY = (e.clientY - (rect.top + rect.height / 2)) * 0.6;
+                    this.dragOffsetX = this.targetOffsetX;
+                    this.dragOffsetY = this.targetOffsetY;
+                }
+                
                 const cell = e.target.closest('.cell');
                 if (cell && cell.dataset.row && cell.dataset.col) {
                     const row = parseInt(cell.dataset.row);
                     const col = parseInt(cell.dataset.col);
                     this.handleDragOver(e, row, col);
-                } else {
-                    // Update drag offset even when not over a cell
-                    const startCell = document.querySelector(
-                        `[data-row="${this.dragStartCell.row}"][data-col="${this.dragStartCell.col}"]`
-                    );
-                    if (startCell) {
-                        const rect = startCell.getBoundingClientRect();
-                        this.dragOffsetX = e.clientX - (rect.left + rect.width / 2);
-                        this.dragOffsetY = e.clientY - (rect.top + rect.height / 2);
-                    }
                 }
             }
         });
@@ -196,12 +202,17 @@ class Match3Game {
             // Store initial mouse position relative to cell center
             this.mouseX = e.clientX;
             this.mouseY = e.clientY;
-            this.dragOffsetX = e.clientX - (rect.left + rect.width / 2);
-            this.dragOffsetY = e.clientY - (rect.top + rect.height / 2);
+            this.dragOffsetX = 0;
+            this.dragOffsetY = 0;
+            this.targetOffsetX = 0;
+            this.targetOffsetY = 0;
+            this.currentOffsetX = 0;
+            this.currentOffsetY = 0;
             
             cell.classList.add('selected', 'dragging');
             cell.style.cursor = 'grabbing';
             cell.style.transition = 'none'; // Disable transition during drag for smooth following
+            cell.style.willChange = 'transform';
             
             // Start smooth position tracking
             this.startDragTracking();
@@ -224,17 +235,17 @@ class Match3Game {
             );
             
             if (cell) {
-                const boardRect = document.getElementById('game-board').getBoundingClientRect();
-                const cellRect = cell.getBoundingClientRect();
-                const cellCenterX = cellRect.left + cellRect.width / 2;
-                const cellCenterY = cellRect.top + cellRect.height / 2;
+                // Smooth interpolation using easing (ease-out cubic for fluid motion)
+                const smoothingFactor = 0.15; // Lower = smoother but slower response
+                this.currentOffsetX += (this.targetOffsetX - this.currentOffsetX) * smoothingFactor;
+                this.currentOffsetY += (this.targetOffsetY - this.currentOffsetY) * smoothingFactor;
                 
-                // Calculate smooth offset from mouse position
-                const offsetX = this.dragOffsetX * 0.3; // Smooth following factor
-                const offsetY = this.dragOffsetY * 0.3;
+                // Apply smooth transform with fluid motion
+                const scale = 1.12 + Math.min(Math.abs(this.currentOffsetX) + Math.abs(this.currentOffsetY), 30) / 200;
+                const rotationX = this.currentOffsetY * 0.1;
+                const rotationY = this.currentOffsetX * 0.1;
                 
-                // Apply smooth transform
-                cell.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(1.15) translateZ(20px) rotateX(8deg) rotateY(8deg)`;
+                cell.style.transform = `translate(${this.currentOffsetX}px, ${this.currentOffsetY}px) scale(${scale}) translateZ(20px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
             }
             
             this.animationFrameId = requestAnimationFrame(updateDragPosition);
@@ -318,11 +329,10 @@ class Match3Game {
         // Get cell positions for smooth swap animation
         const rect1 = cell1.getBoundingClientRect();
         const rect2 = cell2.getBoundingClientRect();
-        const boardRect = document.getElementById('game-board').getBoundingClientRect();
         
-        // Calculate relative positions
-        const deltaX = (rect2.left - rect1.left) / cell1.offsetWidth;
-        const deltaY = (rect2.top - rect1.top) / cell1.offsetHeight;
+        // Calculate relative positions in pixels for smoother animation
+        const deltaX = rect2.left - rect1.left;
+        const deltaY = rect2.top - rect1.top;
         
         // Actually swap in the board array so match checking works correctly
         [this.board[row1][col1], this.board[row2][col2]] = 
@@ -332,26 +342,30 @@ class Match3Game {
         const gem1 = this.board[row1][col1];
         const gem2 = this.board[row2][col2];
         
-        // Enable smooth transitions for swap animation
-        cell1.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        cell2.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        // Enable ultra-smooth transitions for swap animation
+        cell1.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        cell2.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         
-        // Animate swap with smooth position interpolation
-        cell1.style.transform = `translate(${deltaX * 100}%, ${deltaY * 100}%) scale(1.1) translateZ(15px)`;
-        cell2.style.transform = `translate(${-deltaX * 100}%, ${-deltaY * 100}%) scale(1.1) translateZ(15px)`;
+        // Animate swap with fluid position interpolation
+        cell1.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.08) translateZ(15px)`;
+        cell2.style.transform = `translate(${-deltaX}px, ${-deltaY}px) scale(1.08) translateZ(15px)`;
         
-        // Update the visual appearance after a brief delay for smooth transition
+        // Update the visual appearance mid-animation for seamless transition
         setTimeout(() => {
             cell1.className = `cell gem-${gem1}`;
             cell1.textContent = this.getGemEmoji(gem1);
             cell1.classList.add('selected', 'dragging');
-            cell1.style.transform = ''; // Reset transform, let CSS handle it
             
             cell2.className = `cell gem-${gem2}`;
             cell2.textContent = this.getGemEmoji(gem2);
             cell2.classList.add('drag-target');
-            cell2.style.transform = ''; // Reset transform, let CSS handle it
-        }, 50);
+        }, 175); // Halfway through animation for smooth visual swap
+        
+        // Reset transforms after animation completes
+        setTimeout(() => {
+            cell1.style.transform = '';
+            cell2.style.transform = '';
+        }, 350);
         
         this.visualSwapActive = true;
     }
@@ -528,17 +542,24 @@ class Match3Game {
             this.animationFrameId = null;
         }
         
-        // Smoothly reset all drag-related styles
+        // Smoothly reset all drag-related styles with fluid motion
         document.querySelectorAll('.cell').forEach(c => {
-            c.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            c.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
             c.style.transform = '';
+            c.style.willChange = '';
             c.classList.remove('selected', 'drag-target', 'dragging');
             c.style.cursor = '';
+            
+            // Reset offsets
+            this.currentOffsetX = 0;
+            this.currentOffsetY = 0;
+            this.targetOffsetX = 0;
+            this.targetOffsetY = 0;
             
             // Remove inline styles after transition
             setTimeout(() => {
                 c.style.transition = '';
-            }, 300);
+            }, 400);
         });
         
         // Remove board dragging class

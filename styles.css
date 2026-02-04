@@ -240,9 +240,9 @@ body {
     height: 97.2px;
     border-radius: 12.96px;
     cursor: pointer;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-                opacity 0.2s ease;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                opacity 0.3s ease;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -277,10 +277,10 @@ body {
                 inset 0 3px 0 rgba(255, 255, 255, 0.5),
                 inset 0 -4px 8px rgba(0, 0, 0, 0.4);
     z-index: 30;
-    animation: dragPulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: dragPulse 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     border: 3px solid rgba(100, 150, 255, 1);
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .cell.drag-target {
@@ -292,17 +292,17 @@ body {
                 inset 0 2px 0 rgba(255, 255, 255, 0.4),
                 inset 0 -3px 6px rgba(0, 0, 0, 0.3);
     z-index: 25;
-    animation: targetPulse 0.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: targetPulse 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     border: 3px solid rgba(0, 255, 100, 1);
     background-blend-mode: overlay;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .cell.dragging {
-    opacity: 0.85;
+    opacity: 0.9;
     z-index: 35;
-    transition: opacity 0.2s ease, transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: opacity 0.2s ease;
 }
 
 .cell {
