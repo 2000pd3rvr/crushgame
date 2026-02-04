@@ -184,19 +184,15 @@ class Match3Game {
         return false;
     }
     
-    renderBoard() {
+    renderBoard(forceUpdate = false) {
         // Don't render during active drag or processing to prevent flickering
-        if (this.isDragging || this.isProcessing) {
+        if ((this.isDragging || this.isProcessing) && !forceUpdate) {
             this.renderPending = true;
             return;
         }
         
-        // Use requestAnimationFrame to batch updates and prevent flickering
-        if (this.renderPending) {
-            this.renderPending = false;
-        }
-        
         const boardElement = document.getElementById('game-board');
+        if (!boardElement) return;
         
         // Check if board already exists - update instead of recreate
         const existingCells = boardElement.querySelectorAll('.cell');
@@ -206,9 +202,15 @@ class Match3Game {
             boardElement.innerHTML = '';
         }
         
-        // Create board state string for comparison
+        // Create board state string for comparison - only update if state actually changed
         const currentState = JSON.stringify(this.board);
         const stateChanged = currentState !== this.lastBoardState;
+        
+        // If state hasn't changed and we don't need full render, skip update
+        if (!needsFullRender && !stateChanged && !forceUpdate) {
+            return;
+        }
+        
         this.lastBoardState = currentState;
         
         for (let row = 0; row < this.boardRows; row++) {
@@ -234,30 +236,30 @@ class Match3Game {
                     boardElement.appendChild(cell);
                 }
                 
-                // Only update if gem type changed or full render needed
+                // Only update if gem type changed
                 const gemType = this.board[row][col];
                 const expectedClass = `cell gem-${gemType}`;
                 const expectedEmoji = this.getGemEmoji(gemType);
                 
-                // Only update if something actually changed
-                if (needsFullRender || stateChanged || 
-                    !cell.classList.contains(`gem-${gemType}`) || 
-                    cell.textContent !== expectedEmoji) {
-                    
-                    // Preserve interactive states (don't reset during animations)
-                    const isSelected = cell.classList.contains('selected');
-                    const isDragTarget = cell.classList.contains('drag-target');
-                    const isDragging = cell.classList.contains('dragging');
+                // Check if cell needs update
+                const needsUpdate = needsFullRender || 
+                                   !cell.classList.contains(`gem-${gemType}`) || 
+                                   cell.textContent !== expectedEmoji;
+                
+                if (needsUpdate) {
+                    // Preserve animation/interaction states
                     const isMatched = cell.classList.contains('matched');
                     const isMatchEnlarge = cell.classList.contains('match-enlarge');
                     const hasTransform = cell.style.transform && cell.style.transform !== '';
                     
                     // Update gem type and emoji
-                    cell.className = expectedClass;
-                    cell.textContent = expectedEmoji;
+                    if (!isMatched && !isMatchEnlarge) {
+                        cell.className = expectedClass;
+                        cell.textContent = expectedEmoji;
+                    }
                     
-                    // Only reset states if not in an active interaction
-                    if (!isSelected && !isDragTarget && !isDragging && !isMatched && !isMatchEnlarge && !hasTransform) {
+                    // Only reset transform if not in animation
+                    if (!hasTransform && !isMatched && !isMatchEnlarge) {
                         cell.style.transform = '';
                         cell.style.transition = '';
                     }
@@ -777,8 +779,8 @@ class Match3Game {
             }
         });
         
-        // Wait for the enlargement animation to complete
-        await this.sleep(400);
+        // Wait for the enlargement animation to complete (reduced from 400ms)
+        await this.sleep(250);
         
         // Remove the enlarge class
         matches.forEach(match => {
@@ -894,8 +896,8 @@ class Match3Game {
                 }
             });
             
-            // Wait for explosion animation to complete
-            await this.sleep(1000);
+            // Wait for explosion animation to complete (reduced from 1000ms)
+            await this.sleep(600);
             
             // Clean up particles
             document.querySelectorAll('.explosion-particle').forEach(particle => {
@@ -913,21 +915,21 @@ class Match3Game {
             // Fill empty spaces
             this.fillEmptySpaces();
             
-            // Re-render with a small delay to prevent flickering
-            await this.sleep(100);
-            this.renderBoard();
+            // Re-render immediately (no delay needed)
+            this.renderBoard(true);
             
-            // Small delay before checking for new matches
-            await this.sleep(200);
+            // Small delay before checking for new matches (reduced from 200ms)
+            await this.sleep(100);
         }
         
         this.isProcessing = false;
         
-        // Render any pending updates
+        // Render any pending updates after a brief delay
         if (this.renderPending) {
-            requestAnimationFrame(() => {
-                this.renderBoard();
-            });
+            setTimeout(() => {
+                this.renderPending = false;
+                this.renderBoard(true);
+            }, 50);
         }
         
         this.checkGameOver();

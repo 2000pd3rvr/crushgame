@@ -610,12 +610,12 @@ body.dark-theme .level-complete-content {
 }
 
 .cell.match-enlarge {
-    animation: enlargeMatch 0.4s ease-out;
+    animation: enlargeMatch 0.25s ease-out;
     z-index: 15;
 }
 
 .cell.matched {
-    animation: matchAnimation 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: matchAnimation 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 20;
     pointer-events: none;
     position: relative;
@@ -686,7 +686,7 @@ body.dark-theme .level-complete-content {
         transform: scale(1) translateZ(0) rotateX(0deg) rotateY(0deg);
     }
     50% {
-        transform: scale(1.4) translateZ(15px) rotateX(10deg) rotateY(10deg);
+        transform: scale(1.3) translateZ(12px) rotateX(8deg) rotateY(8deg);
         box-shadow: 0 0 20px rgba(255, 215, 0, 0.8),
                     0 8px 16px rgba(0, 0, 0, 0.4),
                     inset 0 2px 0 rgba(255, 255, 255, 0.4);
@@ -702,57 +702,34 @@ body.dark-theme .level-complete-content {
         opacity: 1;
         filter: brightness(1) saturate(1);
     }
-    15% {
-        transform: scale(1.3) rotate(45deg) translateZ(10px) rotateX(15deg) rotateY(15deg);
+    20% {
+        transform: scale(1.4) rotate(90deg) translateZ(15px) rotateX(20deg) rotateY(20deg);
         opacity: 1;
-        filter: brightness(2) saturate(1.5);
-        box-shadow: 0 0 15px rgba(255, 255, 255, 1),
-                    0 0 22px rgba(255, 215, 0, 1),
-                    0 0 30px rgba(255, 165, 0, 0.9),
-                    0 6px 12px rgba(0, 0, 0, 0.4);
-    }
-    30% {
-        transform: scale(1.5) rotate(120deg) translateZ(20px) rotateX(30deg) rotateY(30deg);
-        opacity: 1;
-        filter: brightness(3) saturate(2);
-        box-shadow: 0 0 22px rgba(255, 255, 255, 1),
-                    0 0 37px rgba(255, 215, 0, 1),
-                    0 0 52px rgba(255, 165, 0, 1),
-                    0 0 67px rgba(255, 100, 0, 0.9),
-                    0 8px 16px rgba(0, 0, 0, 0.5);
+        filter: brightness(2.5) saturate(2);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 1),
+                    0 0 30px rgba(255, 215, 0, 1),
+                    0 0 40px rgba(255, 165, 0, 0.9),
+                    0 8px 16px rgba(0, 0, 0, 0.4);
     }
     50% {
-        transform: scale(1.7) rotate(220deg) translateZ(30px) rotateX(45deg) rotateY(45deg);
-        opacity: 0.95;
+        transform: scale(1.6) rotate(180deg) translateZ(25px) rotateX(45deg) rotateY(45deg);
+        opacity: 0.9;
         filter: brightness(4) saturate(2.5);
         box-shadow: 0 0 30px rgba(255, 255, 255, 1),
-                    0 0 52px rgba(255, 215, 0, 1),
-                    0 0 74px rgba(255, 165, 0, 1),
-                    0 0 96px rgba(255, 100, 0, 1),
-                    0 0 118px rgba(255, 50, 0, 0.8),
-                    0 10px 20px rgba(0, 0, 0, 0.6);
+                    0 0 50px rgba(255, 215, 0, 1),
+                    0 0 70px rgba(255, 165, 0, 1),
+                    0 0 90px rgba(255, 100, 0, 0.9),
+                    0 10px 20px rgba(0, 0, 0, 0.5);
     }
-    70% {
-        transform: scale(1.8) rotate(300deg) translateZ(35px) rotateX(60deg) rotateY(60deg);
-        opacity: 0.7;
+    80% {
+        transform: scale(1.7) rotate(270deg) translateZ(30px) rotateX(60deg) rotateY(60deg);
+        opacity: 0.5;
         filter: brightness(5) saturate(3);
-        box-shadow: 0 0 37px rgba(255, 255, 255, 0.9),
-                    0 0 67px rgba(255, 215, 0, 0.9),
-                    0 0 96px rgba(255, 165, 0, 0.9),
-                    0 0 126px rgba(255, 100, 0, 0.8),
-                    0 0 156px rgba(255, 50, 0, 0.7),
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.8),
+                    0 0 70px rgba(255, 215, 0, 0.8),
+                    0 0 100px rgba(255, 165, 0, 0.8),
+                    0 0 130px rgba(255, 100, 0, 0.7),
                     0 12px 24px rgba(0, 0, 0, 0.7);
-    }
-    85% {
-        transform: scale(1.85) rotate(350deg) translateZ(40px) rotateX(75deg) rotateY(75deg);
-        opacity: 0.4;
-        filter: brightness(6) saturate(3);
-        box-shadow: 0 0 44px rgba(255, 255, 255, 0.7),
-                    0 0 81px rgba(255, 215, 0, 0.7),
-                    0 0 118px rgba(255, 165, 0, 0.7),
-                    0 0 155px rgba(255, 100, 0, 0.6),
-                    0 0 192px rgba(255, 50, 0, 0.5),
-                    0 14px 28px rgba(0, 0, 0, 0.8);
     }
     100% {
         transform: scale(0) rotate(360deg) translateZ(0) rotateX(90deg) rotateY(90deg);
@@ -862,7 +839,7 @@ body.dark-theme .level-complete-content {
 .cell.match-enlarge.gem-3,
 .cell.match-enlarge.gem-4,
 .cell.match-enlarge.gem-5 {
-    animation: enlargeMatch 0.4s ease-out !important;
+    animation: enlargeMatch 0.25s ease-out !important;
 }
 
 .game-controls {
