@@ -926,8 +926,8 @@ class Match3Game {
                 }
             });
             
-            // Wait for fade-out animation to complete (0.5s animation + small buffer)
-            await this.sleep(550);
+            // No animation wait - tiles disappear immediately
+            await this.sleep(50);
             
             // Clean up particles
             document.querySelectorAll('.explosion-particle').forEach(particle => {

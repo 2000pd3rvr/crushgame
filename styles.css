@@ -610,22 +610,19 @@ body.dark-theme .level-complete-content {
 }
 
 .cell.match-enlarge {
-    animation: enlargeMatch 0.15s ease-out;
+    animation: none;
     z-index: 15;
 }
 
 .cell.matched {
-    animation: matchAnimation 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    animation: none;
     z-index: 20;
     pointer-events: none;
     position: relative;
     overflow: visible;
-    border: 4px solid rgba(255, 255, 255, 1);
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%) !important;
-    opacity: 1;
-    /* Ensure matched tiles stay visible during animation */
-    display: flex !important;
-    visibility: visible !important;
+    opacity: 0;
+    display: none !important;
+    visibility: hidden !important;
 }
 
 /* Particle styles - dynamically created */
@@ -682,7 +679,7 @@ body.dark-theme .level-complete-content {
 }
 
 .cell.falling {
-    animation: fallAnimation 0.3s ease-out;
+    animation: none;
 }
 
 @keyframes enlargeMatch {
