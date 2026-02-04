@@ -74,6 +74,27 @@ This is a **prototype** ready to become something bigger! Potential next steps:
 - 💰 Monetization features
 - 🌐 Multiplayer & leaderboards
 
+## 🤝 Contributing
+
+**We'd love your help!** This project is open to contributions of all kinds:
+
+- 🐛 **Bug fixes** - Found a bug? Report it or fix it!
+- ✨ **New features** - Got an idea? Let's make it happen!
+- 🎨 **Design improvements** - Better UI/UX? We're all ears!
+- 📝 **Documentation** - Help make the code more understandable
+- 🧪 **Testing** - Play the game and share feedback!
+
+### How to Contribute
+
+1. **Fork the repo** and clone it locally
+2. **Create a branch** for your changes (`git checkout -b feature/amazing-feature`)
+3. **Make your changes** and test them
+4. **Commit** with clear messages (`git commit -m 'Add amazing feature'`)
+5. **Push** to your fork (`git push origin feature/amazing-feature`)
+6. **Open a Pull Request** and describe your changes!
+
+**No contribution is too small!** Even fixing typos or improving comments helps! 🎉
+
 ## 📝 License
 
 MIT License - Feel free to use, modify, and build upon this!
