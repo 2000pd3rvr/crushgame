@@ -1,3 +1,14 @@
+---
+title: Reality Swipe
+emoji: 🎮
+colorFrom: purple
+colorTo: pink
+sdk: static
+sdk_version: latest
+app_file: index.html
+pinned: false
+---
+
 # Reality Swipe - Match-3 Game Prototype
 
 A fully functional match-3 puzzle game prototype similar to Candy Crush Saga. This is a web-based version that can serve as a foundation for a mobile game business.
