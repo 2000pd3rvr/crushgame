@@ -261,8 +261,22 @@ class Match3Game {
                         const isMatchEnlarge = cell.classList.contains('match-enlarge');
                         const hasActiveAnimation = isMatched || isMatchEnlarge;
                         
-                        // Only update if not animating
-                        if (!hasActiveAnimation) {
+                        // Skip if cell is marked as empty (-1) - it will be handled by gravity
+                        if (gemType === -1 && !hasActiveAnimation) {
+                            // Keep cell hidden/empty until gravity fills it
+                            cell.style.display = 'none';
+                            cell.style.opacity = '0';
+                            cell.style.visibility = 'hidden';
+                            continue;
+                        }
+                        
+                        // Only update if not animating and not empty
+                        if (!hasActiveAnimation && gemType !== -1) {
+                            // Restore cell visibility if it was hidden
+                            cell.style.display = '';
+                            cell.style.opacity = '';
+                            cell.style.visibility = '';
+                            
                             cell.className = expectedClass;
                             cell.textContent = expectedEmoji;
                             
@@ -804,34 +818,8 @@ class Match3Game {
     }
     
     updateCellsAfterMatch() {
-        // Update only cells that changed, without full renderBoard
-        const boardElement = document.getElementById('game-board');
-        if (!boardElement) return;
-        
-        const existingCells = boardElement.querySelectorAll('.cell');
-        
-        for (let row = 0; row < this.boardRows; row++) {
-            for (let col = 0; col < this.boardCols; col++) {
-                const cell = existingCells[row * this.boardCols + col];
-                if (!cell) continue;
-                
-                // Skip cells that are still animating
-                if (cell.classList.contains('matched') || cell.classList.contains('match-enlarge')) {
-                    continue;
-                }
-                
-                const gemType = this.board[row][col];
-                const expectedClass = `cell gem-${gemType}`;
-                const expectedEmoji = this.getGemEmoji(gemType);
-                
-                // Only update if gem type changed
-                const currentGemClass = Array.from(cell.classList).find(c => c.startsWith('gem-'));
-                if (currentGemClass !== `gem-${gemType}` || cell.textContent !== expectedEmoji) {
-                    cell.className = expectedClass;
-                    cell.textContent = expectedEmoji;
-                }
-            }
-        }
+        // This function is no longer needed - we use renderBoard(true) instead
+        // Keeping it for backwards compatibility but it's essentially a no-op now
     }
     
     findMatches() {
@@ -925,7 +913,7 @@ class Match3Game {
             this.score += matches.length * 10;
             this.updateUI();
             
-            // Animate matched cells
+            // Animate matched cells - add matched class to trigger fade-out
             matches.forEach(match => {
                 const cell = document.querySelector(
                     `[data-row="${match.row}"][data-col="${match.col}"]`
@@ -937,17 +925,29 @@ class Match3Game {
                 }
             });
             
-            // Wait for explosion animation to complete (much faster)
-            await this.sleep(400);
+            // Wait for fade-out animation to complete (0.5s animation + small buffer)
+            await this.sleep(550);
             
             // Clean up particles
             document.querySelectorAll('.explosion-particle').forEach(particle => {
                 particle.remove();
             });
             
-            // Remove matched cells
+            // Remove matched cells from board and DOM
             matches.forEach(match => {
                 this.board[match.row][match.col] = -1; // Mark as empty
+                
+                // Remove the matched cell from DOM completely
+                const cell = document.querySelector(
+                    `[data-row="${match.row}"][data-col="${match.col}"]`
+                );
+                if (cell) {
+                    cell.classList.remove('matched');
+                    // Hide the cell completely
+                    cell.style.display = 'none';
+                    cell.style.opacity = '0';
+                    cell.style.visibility = 'hidden';
+                }
             });
             
             // Make pieces fall
@@ -956,8 +956,8 @@ class Match3Game {
             // Fill empty spaces
             this.fillEmptySpaces();
             
-            // Update cells individually without full render to prevent flickering
-            this.updateCellsAfterMatch();
+            // Re-render board to show new tiles and remove empty spaces
+            this.renderBoard(true);
             
             // Very short delay before checking for new matches
             await this.sleep(50);
