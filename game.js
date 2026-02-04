@@ -600,7 +600,7 @@ class Match3Game {
             } else {
                 // Invalid swap - revert
                 this.revertVisualSwap();
-                this.renderBoard();
+                // Don't call renderBoard here - revertVisualSwap handles it
             }
             
             // Clear visual swap state
@@ -630,9 +630,10 @@ class Match3Game {
         // Remove connection line
         this.removeConnectionLine();
         
-        // Reset drag state
-        this.dragStartCell = null;
+        // Reset drag state first
         this.isDragging = false;
+        const dragStart = this.dragStartCell;
+        this.dragStartCell = null;
         
         // Cancel animation frame
         if (this.animationFrameId) {
@@ -640,25 +641,32 @@ class Match3Game {
             this.animationFrameId = null;
         }
         
-        // Smoothly reset all drag-related styles with fluid motion
-        document.querySelectorAll('.cell').forEach(c => {
-            c.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
-            c.style.transform = '';
-            c.style.willChange = '';
-            c.classList.remove('selected', 'drag-target', 'dragging');
-            c.style.cursor = '';
-            
-            // Reset offsets
-            this.currentOffsetX = 0;
-            this.currentOffsetY = 0;
-            this.targetOffsetX = 0;
-            this.targetOffsetY = 0;
-            
-            // Remove inline styles after transition
-            setTimeout(() => {
-                c.style.transition = '';
-            }, 400);
+        // Smoothly reset all drag-related styles using requestAnimationFrame for smoothness
+        requestAnimationFrame(() => {
+            document.querySelectorAll('.cell').forEach(c => {
+                // Only reset if not in an animation state
+                if (!c.classList.contains('matched') && !c.classList.contains('match-enlarge')) {
+                    c.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease';
+                    c.style.transform = '';
+                    c.style.willChange = '';
+                    c.classList.remove('selected', 'drag-target', 'dragging');
+                    c.style.cursor = '';
+                    
+                    // Remove inline styles after transition
+                    setTimeout(() => {
+                        if (!c.classList.contains('matched')) {
+                            c.style.transition = '';
+                        }
+                    }, 300);
+                }
+            });
         });
+        
+        // Reset offsets
+        this.currentOffsetX = 0;
+        this.currentOffsetY = 0;
+        this.targetOffsetX = 0;
+        this.targetOffsetY = 0;
         
         // Remove board dragging class
         document.getElementById('game-board').classList.remove('is-dragging');
