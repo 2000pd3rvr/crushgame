@@ -40,7 +40,35 @@ class Match3Game {
     
     init() {
         this.setupEventListeners();
+        this.setupTheme();
         this.showHome();
+    }
+    
+    setupTheme() {
+        // Load saved theme or default to light
+        const savedTheme = localStorage.getItem('gameTheme') || 'light';
+        this.applyTheme(savedTheme);
+        
+        // Setup theme selector
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            themeSelect.value = savedTheme;
+            themeSelect.addEventListener('change', (e) => {
+                this.applyTheme(e.target.value);
+            });
+        }
+    }
+    
+    applyTheme(theme) {
+        const body = document.body;
+        if (theme === 'dark') {
+            body.classList.add('dark-theme');
+            body.classList.remove('light-theme');
+        } else {
+            body.classList.add('light-theme');
+            body.classList.remove('dark-theme');
+        }
+        localStorage.setItem('gameTheme', theme);
     }
     
     showHome() {
