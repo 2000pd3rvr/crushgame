@@ -219,10 +219,9 @@ class Match3Game {
         
         this.lastBoardState = currentState;
         
-        // Use requestAnimationFrame for smooth updates
-        requestAnimationFrame(() => {
-            for (let row = 0; row < this.boardRows; row++) {
-                for (let col = 0; col < this.boardCols; col++) {
+        // Update cells directly without requestAnimationFrame to prevent flickering
+        for (let row = 0; row < this.boardRows; row++) {
+            for (let col = 0; col < this.boardCols; col++) {
                     let cell = existingCells[row * this.boardCols + col];
                     
                     if (!cell || needsFullRender) {
@@ -261,18 +260,25 @@ class Match3Game {
                         const isMatchEnlarge = cell.classList.contains('match-enlarge');
                         const hasActiveAnimation = isMatched || isMatchEnlarge;
                         
-                        // Skip if cell is marked as empty (-1) - it will be handled by gravity
-                        if (gemType === -1 && !hasActiveAnimation) {
-                            // Keep cell hidden/empty until gravity fills it
-                            cell.style.display = 'none';
-                            cell.style.opacity = '0';
-                            cell.style.visibility = 'hidden';
+                        // Skip if cell is marked as empty (-1)
+                        if (gemType === -1) {
+                            // Hide empty cells but don't manipulate inline styles repeatedly
+                            if (!cell.classList.contains('empty-cell')) {
+                                cell.classList.add('empty-cell');
+                                cell.style.display = 'none';
+                            }
                             continue;
                         }
                         
-                        // Only update if not animating and not empty
-                        if (!hasActiveAnimation && gemType !== -1) {
-                            // Restore cell visibility if it was hidden
+                        // Remove empty-cell class if present
+                        if (cell.classList.contains('empty-cell')) {
+                            cell.classList.remove('empty-cell');
+                            cell.style.display = '';
+                        }
+                        
+                        // Only update if not animating
+                        if (!hasActiveAnimation) {
+                            // Always ensure cell is visible for non-empty cells
                             cell.style.display = '';
                             cell.style.opacity = '';
                             cell.style.visibility = '';
@@ -286,10 +292,22 @@ class Match3Game {
                                 cell.style.transition = '';
                             }
                         }
+                    } else {
+                        // Even if no update needed, ensure visibility is correct
+                        if (gemType === -1) {
+                            if (!cell.classList.contains('empty-cell')) {
+                                cell.classList.add('empty-cell');
+                                cell.style.display = 'none';
+                            }
+                        } else {
+                            if (cell.classList.contains('empty-cell')) {
+                                cell.classList.remove('empty-cell');
+                                cell.style.display = '';
+                            }
+                        }
                     }
                 }
             }
-        });
         
         // Add board-level mousemove for better drag tracking
         boardElement.addEventListener('mousemove', (e) => {
@@ -919,17 +937,8 @@ class Match3Game {
             matches.forEach(match => {
                 this.board[match.row][match.col] = -1; // Mark as empty
                 
-                // Remove the matched cell from DOM completely
-                const cell = document.querySelector(
-                    `[data-row="${match.row}"][data-col="${match.col}"]`
-                );
-                if (cell) {
-                    cell.classList.remove('matched');
-                    // Hide the cell completely
-                    cell.style.display = 'none';
-                    cell.style.opacity = '0';
-                    cell.style.visibility = 'hidden';
-                }
+                // Mark cell as empty - renderBoard will handle hiding it
+                // Don't manipulate DOM directly here to prevent flickering
             });
             
             // Make pieces fall
@@ -938,8 +947,11 @@ class Match3Game {
             // Fill empty spaces
             this.fillEmptySpaces();
             
-            // Re-render board to show new tiles and remove empty spaces
-            this.renderBoard(true);
+            // Re-render board to show new tiles - do it synchronously to prevent flickering
+            // Only render if not already processing (double-check)
+            if (!this.isProcessing) {
+                this.renderBoard(true);
+            }
             
             // Very short delay before checking for new matches
             await this.sleep(50);
@@ -947,13 +959,10 @@ class Match3Game {
         
         this.isProcessing = false;
         
-        // Render any pending updates after processing completes
+        // Render any pending updates after processing completes - do it synchronously
         if (this.renderPending) {
             this.renderPending = false;
-            // Use requestAnimationFrame for smooth update
-            requestAnimationFrame(() => {
-                this.renderBoard(true);
-            });
+            this.renderBoard(true);
         }
         
         this.checkGameOver();

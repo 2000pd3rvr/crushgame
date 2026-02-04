@@ -477,6 +477,11 @@ body.dark-theme .level-complete-content {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.cell.empty-cell {
+    display: none !important;
+}
     font-size: 3.24em;
     padding: 0;
     position: relative;
