@@ -185,8 +185,14 @@ class Match3Game {
     }
     
     renderBoard(forceUpdate = false) {
-        // Don't render during active drag or processing to prevent flickering
-        if ((this.isDragging || this.isProcessing) && !forceUpdate) {
+        // NEVER render during processing - this causes flickering
+        if (this.isProcessing) {
+            this.renderPending = true;
+            return;
+        }
+        
+        // Don't render during active drag unless forced
+        if (this.isDragging && !forceUpdate) {
             this.renderPending = true;
             return;
         }
@@ -202,70 +208,74 @@ class Match3Game {
             boardElement.innerHTML = '';
         }
         
-        // Create board state string for comparison - only update if state actually changed
+        // Create board state string for comparison
         const currentState = JSON.stringify(this.board);
         const stateChanged = currentState !== this.lastBoardState;
         
-        // If state hasn't changed and we don't need full render, skip update
+        // If state hasn't changed and we don't need full render, skip update completely
         if (!needsFullRender && !stateChanged && !forceUpdate) {
             return;
         }
         
         this.lastBoardState = currentState;
         
-        for (let row = 0; row < this.boardRows; row++) {
-            for (let col = 0; col < this.boardCols; col++) {
-                let cell = existingCells[row * this.boardCols + col];
-                
-                if (!cell || needsFullRender) {
-                    cell = document.createElement('div');
-                    cell.dataset.row = row;
-                    cell.dataset.col = col;
+        // Use requestAnimationFrame for smooth updates
+        requestAnimationFrame(() => {
+            for (let row = 0; row < this.boardRows; row++) {
+                for (let col = 0; col < this.boardCols; col++) {
+                    let cell = existingCells[row * this.boardCols + col];
                     
-                    // Click handler (fallback)
-                    cell.addEventListener('click', () => this.handleCellClick(row, col));
-                    
-                    // Drag handlers
-                    cell.addEventListener('mousedown', (e) => this.handleDragStart(e, row, col));
-                    cell.addEventListener('mouseenter', (e) => this.handleDragOver(e, row, col));
-                    
-                    // Prevent text selection during drag
-                    cell.addEventListener('selectstart', (e) => e.preventDefault());
-                    cell.addEventListener('dragstart', (e) => e.preventDefault());
-                    
-                    boardElement.appendChild(cell);
-                }
-                
-                // Only update if gem type changed
-                const gemType = this.board[row][col];
-                const expectedClass = `cell gem-${gemType}`;
-                const expectedEmoji = this.getGemEmoji(gemType);
-                
-                // Check if cell needs update
-                const needsUpdate = needsFullRender || 
-                                   !cell.classList.contains(`gem-${gemType}`) || 
-                                   cell.textContent !== expectedEmoji;
-                
-                if (needsUpdate) {
-                    // Preserve animation/interaction states
-                    const isMatched = cell.classList.contains('matched');
-                    const isMatchEnlarge = cell.classList.contains('match-enlarge');
-                    const hasTransform = cell.style.transform && cell.style.transform !== '';
-                    
-                    // Update gem type and emoji
-                    if (!isMatched && !isMatchEnlarge) {
-                        cell.className = expectedClass;
-                        cell.textContent = expectedEmoji;
+                    if (!cell || needsFullRender) {
+                        cell = document.createElement('div');
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        
+                        // Click handler (fallback)
+                        cell.addEventListener('click', () => this.handleCellClick(row, col));
+                        
+                        // Drag handlers
+                        cell.addEventListener('mousedown', (e) => this.handleDragStart(e, row, col));
+                        cell.addEventListener('mouseenter', (e) => this.handleDragOver(e, row, col));
+                        
+                        // Prevent text selection during drag
+                        cell.addEventListener('selectstart', (e) => e.preventDefault());
+                        cell.addEventListener('dragstart', (e) => e.preventDefault());
+                        
+                        boardElement.appendChild(cell);
                     }
                     
-                    // Only reset transform if not in animation
-                    if (!hasTransform && !isMatched && !isMatchEnlarge) {
-                        cell.style.transform = '';
-                        cell.style.transition = '';
+                    // Only update if gem type changed
+                    const gemType = this.board[row][col];
+                    const expectedClass = `cell gem-${gemType}`;
+                    const expectedEmoji = this.getGemEmoji(gemType);
+                    
+                    // Check if cell needs update - be very strict
+                    const currentGemClass = Array.from(cell.classList).find(c => c.startsWith('gem-'));
+                    const needsUpdate = needsFullRender || 
+                                       currentGemClass !== `gem-${gemType}` || 
+                                       cell.textContent !== expectedEmoji;
+                    
+                    if (needsUpdate) {
+                        // NEVER update cells that are in animation states
+                        const isMatched = cell.classList.contains('matched');
+                        const isMatchEnlarge = cell.classList.contains('match-enlarge');
+                        const hasActiveAnimation = isMatched || isMatchEnlarge;
+                        
+                        // Only update if not animating
+                        if (!hasActiveAnimation) {
+                            cell.className = expectedClass;
+                            cell.textContent = expectedEmoji;
+                            
+                            // Only reset transform if cell is idle
+                            if (!cell.style.transform || cell.style.transform === '') {
+                                cell.style.transform = '';
+                                cell.style.transition = '';
+                            }
+                        }
                     }
                 }
             }
-        }
+        });
         
         // Add board-level mousemove for better drag tracking
         boardElement.addEventListener('mousemove', (e) => {
@@ -779,8 +789,8 @@ class Match3Game {
             }
         });
         
-        // Wait for the enlargement animation to complete (reduced from 400ms)
-        await this.sleep(250);
+        // Wait for the enlargement animation to complete (much faster)
+        await this.sleep(150);
         
         // Remove the enlarge class
         matches.forEach(match => {
@@ -791,6 +801,37 @@ class Match3Game {
                 cell.classList.remove('match-enlarge');
             }
         });
+    }
+    
+    updateCellsAfterMatch() {
+        // Update only cells that changed, without full renderBoard
+        const boardElement = document.getElementById('game-board');
+        if (!boardElement) return;
+        
+        const existingCells = boardElement.querySelectorAll('.cell');
+        
+        for (let row = 0; row < this.boardRows; row++) {
+            for (let col = 0; col < this.boardCols; col++) {
+                const cell = existingCells[row * this.boardCols + col];
+                if (!cell) continue;
+                
+                // Skip cells that are still animating
+                if (cell.classList.contains('matched') || cell.classList.contains('match-enlarge')) {
+                    continue;
+                }
+                
+                const gemType = this.board[row][col];
+                const expectedClass = `cell gem-${gemType}`;
+                const expectedEmoji = this.getGemEmoji(gemType);
+                
+                // Only update if gem type changed
+                const currentGemClass = Array.from(cell.classList).find(c => c.startsWith('gem-'));
+                if (currentGemClass !== `gem-${gemType}` || cell.textContent !== expectedEmoji) {
+                    cell.className = expectedClass;
+                    cell.textContent = expectedEmoji;
+                }
+            }
+        }
     }
     
     findMatches() {
@@ -896,8 +937,8 @@ class Match3Game {
                 }
             });
             
-            // Wait for explosion animation to complete (reduced from 1000ms)
-            await this.sleep(600);
+            // Wait for explosion animation to complete (much faster)
+            await this.sleep(400);
             
             // Clean up particles
             document.querySelectorAll('.explosion-particle').forEach(particle => {
@@ -915,21 +956,22 @@ class Match3Game {
             // Fill empty spaces
             this.fillEmptySpaces();
             
-            // Re-render immediately (no delay needed)
-            this.renderBoard(true);
+            // Update cells individually without full render to prevent flickering
+            this.updateCellsAfterMatch();
             
-            // Small delay before checking for new matches (reduced from 200ms)
-            await this.sleep(100);
+            // Very short delay before checking for new matches
+            await this.sleep(50);
         }
         
         this.isProcessing = false;
         
-        // Render any pending updates after a brief delay
+        // Render any pending updates after processing completes
         if (this.renderPending) {
-            setTimeout(() => {
-                this.renderPending = false;
+            this.renderPending = false;
+            // Use requestAnimationFrame for smooth update
+            requestAnimationFrame(() => {
                 this.renderBoard(true);
-            }, 50);
+            });
         }
         
         this.checkGameOver();
