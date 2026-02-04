@@ -25,6 +25,8 @@ class Match3Game {
         this.currentOffsetY = 0;
         this.animationFrameId = null;
         this.buttonClickCooldown = false;
+        this.renderPending = false;
+        this.lastBoardState = null;
         
         // Load best stats from localStorage
         this.bestLevel = parseInt(localStorage.getItem('bestLevel') || '1');
@@ -155,9 +157,15 @@ class Match3Game {
     }
     
     renderBoard() {
-        // Don't render during active drag to prevent instability
-        if (this.isDragging) {
+        // Don't render during active drag or processing to prevent flickering
+        if (this.isDragging || this.isProcessing) {
+            this.renderPending = true;
             return;
+        }
+        
+        // Use requestAnimationFrame to batch updates and prevent flickering
+        if (this.renderPending) {
+            this.renderPending = false;
         }
         
         const boardElement = document.getElementById('game-board');
@@ -169,6 +177,11 @@ class Match3Game {
         if (needsFullRender) {
             boardElement.innerHTML = '';
         }
+        
+        // Create board state string for comparison
+        const currentState = JSON.stringify(this.board);
+        const stateChanged = currentState !== this.lastBoardState;
+        this.lastBoardState = currentState;
         
         for (let row = 0; row < this.boardRows; row++) {
             for (let col = 0; col < this.boardCols; col++) {
@@ -193,15 +206,34 @@ class Match3Game {
                     boardElement.appendChild(cell);
                 }
                 
-                // Update cell content and class
+                // Only update if gem type changed or full render needed
                 const gemType = this.board[row][col];
-                cell.className = `cell gem-${gemType}`;
-                cell.textContent = this.getGemEmoji(gemType);
+                const expectedClass = `cell gem-${gemType}`;
+                const expectedEmoji = this.getGemEmoji(gemType);
                 
-                // Reset any transform/transition states
-                cell.style.transform = '';
-                cell.style.transition = '';
-                cell.classList.remove('selected', 'drag-target', 'dragging', 'matched', 'match-enlarge');
+                // Only update if something actually changed
+                if (needsFullRender || stateChanged || 
+                    !cell.classList.contains(`gem-${gemType}`) || 
+                    cell.textContent !== expectedEmoji) {
+                    
+                    // Preserve interactive states (don't reset during animations)
+                    const isSelected = cell.classList.contains('selected');
+                    const isDragTarget = cell.classList.contains('drag-target');
+                    const isDragging = cell.classList.contains('dragging');
+                    const isMatched = cell.classList.contains('matched');
+                    const isMatchEnlarge = cell.classList.contains('match-enlarge');
+                    const hasTransform = cell.style.transform && cell.style.transform !== '';
+                    
+                    // Update gem type and emoji
+                    cell.className = expectedClass;
+                    cell.textContent = expectedEmoji;
+                    
+                    // Only reset states if not in an active interaction
+                    if (!isSelected && !isDragTarget && !isDragging && !isMatched && !isMatchEnlarge && !hasTransform) {
+                        cell.style.transform = '';
+                        cell.style.transition = '';
+                    }
+                }
             }
         }
         
@@ -469,6 +501,11 @@ class Match3Game {
                 cell2.className = `cell gem-${gem2}`;
                 cell2.textContent = this.getGemEmoji(gem2);
                 cell2.style.transform = '';
+                
+                // Render board after revert animation completes
+                requestAnimationFrame(() => {
+                    this.renderBoard();
+                });
             }, 300);
         }
         
@@ -688,10 +725,8 @@ class Match3Game {
                     [this.board[row1][col1], this.board[row2][col2]] = 
                     [this.board[row2][col2], this.board[row1][col1]];
                 }
-                // Don't call renderBoard here - let revertVisualSwap handle visual update
-                if (!this.visualSwapActive) {
-                    this.renderBoard();
-                }
+                // Don't call renderBoard here - revertVisualSwap handles visual update
+                // renderBoard will be called after revert completes
         }
     }
     
@@ -842,14 +877,23 @@ class Match3Game {
             // Fill empty spaces
             this.fillEmptySpaces();
             
-            // Re-render
+            // Re-render with a small delay to prevent flickering
+            await this.sleep(100);
             this.renderBoard();
             
             // Small delay before checking for new matches
-            await this.sleep(300);
+            await this.sleep(200);
         }
         
         this.isProcessing = false;
+        
+        // Render any pending updates
+        if (this.renderPending) {
+            requestAnimationFrame(() => {
+                this.renderBoard();
+            });
+        }
+        
         this.checkGameOver();
     }
     
