@@ -248,7 +248,25 @@ class Match3Game {
                     const expectedClass = `cell gem-${gemType}`;
                     const expectedEmoji = this.getGemEmoji(gemType);
                     
-                    // Check if cell needs update - be very strict
+                    // Handle empty cells first
+                    if (gemType === -1) {
+                        // Hide empty cells
+                        if (!cell.classList.contains('empty-cell')) {
+                            cell.classList.add('empty-cell');
+                            cell.style.display = 'none';
+                        }
+                        continue;
+                    }
+                    
+                    // Remove empty-cell class and ensure visibility for non-empty cells
+                    if (cell.classList.contains('empty-cell')) {
+                        cell.classList.remove('empty-cell');
+                        cell.style.display = '';
+                        cell.style.opacity = '';
+                        cell.style.visibility = '';
+                    }
+                    
+                    // Check if cell needs update
                     const currentGemClass = Array.from(cell.classList).find(c => c.startsWith('gem-'));
                     const needsUpdate = needsFullRender || 
                                        currentGemClass !== `gem-${gemType}` || 
@@ -259,22 +277,6 @@ class Match3Game {
                         const isMatched = cell.classList.contains('matched');
                         const isMatchEnlarge = cell.classList.contains('match-enlarge');
                         const hasActiveAnimation = isMatched || isMatchEnlarge;
-                        
-                        // Skip if cell is marked as empty (-1)
-                        if (gemType === -1) {
-                            // Hide empty cells but don't manipulate inline styles repeatedly
-                            if (!cell.classList.contains('empty-cell')) {
-                                cell.classList.add('empty-cell');
-                                cell.style.display = 'none';
-                            }
-                            continue;
-                        }
-                        
-                        // Remove empty-cell class if present
-                        if (cell.classList.contains('empty-cell')) {
-                            cell.classList.remove('empty-cell');
-                            cell.style.display = '';
-                        }
                         
                         // Only update if not animating
                         if (!hasActiveAnimation) {
@@ -290,19 +292,6 @@ class Match3Game {
                             if (!cell.style.transform || cell.style.transform === '') {
                                 cell.style.transform = '';
                                 cell.style.transition = '';
-                            }
-                        }
-                    } else {
-                        // Even if no update needed, ensure visibility is correct
-                        if (gemType === -1) {
-                            if (!cell.classList.contains('empty-cell')) {
-                                cell.classList.add('empty-cell');
-                                cell.style.display = 'none';
-                            }
-                        } else {
-                            if (cell.classList.contains('empty-cell')) {
-                                cell.classList.remove('empty-cell');
-                                cell.style.display = '';
                             }
                         }
                     }
