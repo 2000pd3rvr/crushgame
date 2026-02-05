@@ -185,8 +185,8 @@ class Match3Game {
     }
     
     renderBoard(forceUpdate = false) {
-        // NEVER render during processing - this causes flickering
-        if (this.isProcessing) {
+        // Allow rendering during processing only if forceUpdate is true (for final render after matches)
+        if (this.isProcessing && !forceUpdate) {
             this.renderPending = true;
             return;
         }
@@ -944,17 +944,14 @@ class Match3Game {
             // Make pieces fall
             await this.applyGravity();
             
-            // Fill empty spaces
+            // Fill empty spaces with new random gems
             this.fillEmptySpaces();
             
-            // Re-render board to show new tiles - do it synchronously to prevent flickering
-            // Only render if not already processing (double-check)
-            if (!this.isProcessing) {
-                this.renderBoard(true);
-            }
+            // Re-render board to show new tiles - force update even during processing
+            this.renderBoard(true);
             
-            // Very short delay before checking for new matches
-            await this.sleep(50);
+            // Small delay to let the new tiles appear before checking for new matches
+            await this.sleep(100);
         }
         
         this.isProcessing = false;
